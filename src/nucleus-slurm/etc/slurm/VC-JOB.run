@@ -1,0 +1,96 @@
+#!/bin/sh
+
+echo "Starting $0 at $(date)"
+
+init()
+{
+    echo "Starting init() at $(date)"
+    . /etc/profile.d/modules.sh
+    . /etc/profile.d/opt-modulefiles.sh
+
+    module load intel mvapich2_ib python
+    echo "Finished init() at $(date)"
+}
+
+export COMPUTESET_JOB_STAGE='JOBSCRIPT'
+export NOTIFY_SCRIPT=/opt/python/lib/python2.7/site-packages/nucleus_service/computeset_job_notify.sh
+notify(){
+    export COMPUTESET_JOB_STATE="$1"
+    /bin/logger -p local0.info -t nucleus-computeset -i "${SLURM_JOB_NAME} is in ${COMPUTESET_JOB_STATE} state"
+    ${NOTIFY_SCRIPT}
+}
+
+signal_handler()
+{
+    echo "Starting signal_handler() at $(date)"
+    cleanup_and_exit
+    echo "Finished signal_handler() at $(date)"
+}
+
+barrier()
+{
+    echo "Starting barrier() at $(date)"
+    srun -n${SLURM_NTASKS} hostname
+    wait
+    notify "running"
+    echo "Finished barrier() at $(date)"
+}
+
+save_env()
+{
+    echo "Starting save_env() at $(date)"
+    TRACKING_DIR=/var/spool/slurmd/job_tracking/${SLURM_JOB_USER}
+    ENV_TRACKING_FILE=${TRACKING_DIR}/${SLURM_JOB_ID}/environment
+    tf=$(mktemp)
+    /usr/bin/printenv | /bin/egrep "^SLURM" > $tf
+    /bin/cat ${ENV_TRACKING_FILE} ${tf} | /bin/sort -u > ${ENV_TRACKING_FILE}
+    echo "===== ${ENV_TRACKING_FILE} ====="
+    /bin/cat ${ENV_TRACKING_FILE}
+    echo "================================"
+    echo "Finished save_env() at $(date)"
+}
+
+sleepytime()
+{
+    echo "Starting sleepytime() at $(date)"
+    interval=10
+    echo "sleeptime = ${sleeptime}, interval = ${interval}, iters = $(( ${sleeptime}/${interval} ))"
+
+    for (( i=${sleeptime}; i>=${interval}; i-=${interval} ))
+    do
+        # Here we can update nucleus with status if we want
+        /bin/sleep $interval
+    done
+    echo "Finished sleepytime() at $(date)"
+}
+
+cleanup_and_exit()
+{
+    echo "Starting cleanup_and_exit() at $(date)"
+    retval=0
+    notify "ending"
+    echo "Finished cleanup_and_exit() at $(date)"
+    exit $retval
+}
+
+trap 'signal_handler' USR1 CONT TERM
+
+[[ $# -ne 1 ]] && sleeptime=300 || sleeptime=$(($1 * 60))
+
+
+################################################################################
+## Virtual Cluster Job Script
+################################################################################
+
+init
+
+barrier
+
+save_env
+
+sleepytime
+
+cleanup_and_exit
+
+echo "Finished $0 at $(date)"
+exit 0

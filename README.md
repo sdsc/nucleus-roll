@@ -24,6 +24,11 @@ Parts of the bootstrap.sh script require pip to install Python packages and the
 nucleus-roll depends on Python 2.7. The SDSC python-roll provides both in
 CentOS 6 so `module load python` before bootstrap and build will work.
 
+The nucleus-guacamole-client currently builds as a SUBREPO of this repo. As a
+result you must currently build with SSH agent forwarding your Forge key into
+the build host/environment (ie. root) and requires **sudo -s** permissions. We
+should really fix this...
+
 The roll binds together img-storage, rabbitmq and kvm functionality and
 requires all those to be installed in the cluster.
 

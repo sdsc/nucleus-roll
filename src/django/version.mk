@@ -1,5 +1,5 @@
 NAME            = opt-Django
-VERSION         = 1.11
+VERSION         = 1.11.10
 RELEASE 	= 0
 
 SOURCE_DIR	= Django-$(VERSION)
@@ -13,4 +13,3 @@ SOURCE_PKG         = $(SOURCE_NAME)-$(SOURCE_VERSION).$(SOURCE_SUFFIX)
 SOURCE_DIR         = $(SOURCE_PKG:%.$(SOURCE_SUFFIX)=%)
 
 TAR_GZ_PKGS           = $(SOURCE_PKG)
-
